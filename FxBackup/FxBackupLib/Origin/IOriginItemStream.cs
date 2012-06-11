@@ -6,6 +6,7 @@ namespace FxBackupLib
 {
 	public interface IOriginItemStream
 	{
+		Guid Id { get; }
 		Stream GetStream();
 	}
 }

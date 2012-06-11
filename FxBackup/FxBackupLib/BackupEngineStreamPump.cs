@@ -19,7 +19,7 @@ namespace FxBackupLib
 		{
 			int len;
 			while ((len = input.Read(buffer, 0, BufferSize)) > 0) {
-				//output.Write(buffer, 0, len);
+				output.Write(buffer, 0, len);
 			}
 		}
 	}

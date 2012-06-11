@@ -30,6 +30,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -42,10 +43,15 @@
     <Compile Include="Origin\IOriginItemStream.cs" />
     <Compile Include="Origin\FileSystemOriginItemDataStream.cs" />
     <Compile Include="BackupEngineStreamPump.cs" />
+    <Compile Include="Destination\FileDirectoryMultiStream.cs" />
+    <Compile Include="Destination\ItemStore.cs" />
+    <Compile Include="Destination\MultiStream.cs" />
+    <Compile Include="Util\SerializableDictionary.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="Util\" />
     <Folder Include="Origin\" />
+    <Folder Include="Destination\" />
   </ItemGroup>
 </Project>

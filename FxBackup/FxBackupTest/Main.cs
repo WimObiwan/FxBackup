@@ -1,5 +1,6 @@
 using System;
 using FxBackupLib;
+using System.IO;
 
 namespace FxBackupTest
 {
@@ -12,7 +13,10 @@ namespace FxBackupTest
 
 		static void Run ()
 		{
-			BackupEngine engine = new BackupEngine ();
+			string dest = @"c:\temp\fxbtest";
+			Directory.Delete (dest, true);
+			ItemStore itemStore = new ItemStore (new FileDirectoryMultiStream (dest));
+			BackupEngine engine = new BackupEngine (itemStore);
 			engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
 			engine.Run ();
 		}
