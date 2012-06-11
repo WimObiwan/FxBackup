@@ -12,7 +12,7 @@ namespace FxBackupLib
 			this.FileSystemInfo = fileSystemInfo;
 		}
 		
-		public string Name { get { return FileSystemInfo.FullName; } }
+		public string Name { get { return FileSystemInfo.Name; } }
 
 		public System.Collections.Generic.IEnumerable<IOriginItem> SubItems {
 			get {

@@ -28,22 +28,24 @@ namespace FxBackupLib
 		void ProcessOrigin (IOrigin origin)
 		{
 			IOriginItem originItem = origin.GetRootItem ();
-			ProcessOriginItem (originItem);
+			ItemStore.Item itemStoreItem = ItemStore.CreateRootItem (originItem.Name);
+			ProcessOriginItem (itemStoreItem, originItem);
 		}
 
-		void ProcessOriginItem (IOriginItem originItem)
+		void ProcessOriginItem (ItemStore.Item itemStoreItem, IOriginItem originItem)
 		{
 			Console.WriteLine (originItem.Name);
 			foreach (IOriginItemStream originItemStream in originItem.Streams) {
 				using (Stream inputStream = originItemStream.GetStream()) {
-					using (Stream outputStream = ItemStore.CreateItem (originItem.Name, originItemStream.Id)) {
+					using (Stream outputStream = itemStoreItem.CreateStream (originItemStream.Id)) {
 						streamPump.Pump (inputStream, outputStream);
 					}
 				}
 			}
 			
 			foreach (IOriginItem subOriginItem in originItem.SubItems) {
-				ProcessOriginItem (subOriginItem);
+				ItemStore.Item itemStoreSubItem = itemStoreItem.CreateSubItem (subOriginItem.Name);
+				ProcessOriginItem (itemStoreSubItem, subOriginItem);
 			}
 		}
 	}
