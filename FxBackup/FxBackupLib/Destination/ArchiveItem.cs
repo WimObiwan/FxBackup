@@ -5,11 +5,11 @@ using System.Linq;
 
 namespace FxBackupLib
 {
-	public partial class ItemStore
+	public partial class Archive
 	{
 		public class Item
 		{
-			ItemStore itemStore;
+			Archive itemStore;
 
 			/*internal struct Tuple<T1, T2>
 			{
@@ -31,7 +31,7 @@ namespace FxBackupLib
 				}
 			}*/
 			
-			internal Item (ItemStore itemStore, string name)
+			internal Item (Archive itemStore, string name)
 			{
 				this.itemStore = itemStore;
 				Name = name;
@@ -56,7 +56,7 @@ namespace FxBackupLib
 				return itemStore.OpenStream (Streams.Single (p => p.Item1 == streamId).Item2);
 			}
 
-			public ItemStore.Item CreateChildItem (string name)
+			public Archive.Item CreateChildItem (string name)
 			{
 				Item subItem = new Item (itemStore, name);
 				ChildItems.Add (subItem);

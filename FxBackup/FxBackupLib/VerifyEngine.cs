@@ -9,11 +9,11 @@ namespace FxBackupLib
 	{
 		StreamVerifier streamVerifier = new StreamVerifier();
 		public List<IOrigin> Origins { get; private set; }
-		public ItemStore ItemStore { get; private set; }
+		public Archive ItemStore { get; private set; }
 		
-		List<ItemStore.Item> rootItems;
+		List<Archive.Item> rootItems;
 		
-		public VerifyEngine (ItemStore itemStore)
+		public VerifyEngine (Archive itemStore)
 		{
 			Origins = new List<IOrigin> ();
 			ItemStore = itemStore;
@@ -30,7 +30,7 @@ namespace FxBackupLib
 					same = false;
 			}
 			
-			foreach (ItemStore.Item item in rootItems) {
+			foreach (Archive.Item item in rootItems) {
 				Console.WriteLine ("Only present in ItemStore: {0}", item.Name);
 			}
 			
@@ -53,7 +53,7 @@ namespace FxBackupLib
 			return same;
 		}
 
-		bool ProcessOriginItem (ItemStore.Item itemStoreItem, IOriginItem originItem)
+		bool ProcessOriginItem (Archive.Item itemStoreItem, IOriginItem originItem)
 		{
 			bool same = true;
 			

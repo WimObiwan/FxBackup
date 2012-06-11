@@ -5,7 +5,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace FxBackupLib
 {
-	public partial class ItemStore
+	public partial class Archive
 	{
 		MultiStream physicalStore;
 		readonly Guid IndexStreamId = new Guid ("26108f76-8a54-4387-83ba-0ef468517a3b");
@@ -18,7 +18,7 @@ namespace FxBackupLib
 			}
 		}
 		
-		public ItemStore (MultiStream physicalStore)
+		public Archive (MultiStream physicalStore)
 		{
 			this.physicalStore = physicalStore;
 		}

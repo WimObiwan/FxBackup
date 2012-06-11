@@ -21,7 +21,7 @@ namespace FxBackupTest
 		
 		static void Backup ()
 		{
-			ItemStore itemStore = new ItemStore (new FileDirectoryMultiStream (dest));
+			Archive itemStore = new Archive (new DirectoryStore (dest));
 			BackupEngine engine = new BackupEngine (itemStore);
 			engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
 			engine.Run ();			
@@ -29,7 +29,7 @@ namespace FxBackupTest
 
 		static void Verify ()
 		{
-			ItemStore itemStore = new ItemStore (new FileDirectoryMultiStream (dest));
+			Archive itemStore = new Archive (new DirectoryStore (dest));
 			VerifyEngine engine = new VerifyEngine (itemStore);
 			engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
 			bool same = engine.Run ();

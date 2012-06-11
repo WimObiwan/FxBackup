@@ -41,14 +41,14 @@
     <Compile Include="Origin\FileSystemOriginItem.cs" />
     <Compile Include="Origin\IOriginItemStream.cs" />
     <Compile Include="Origin\FileSystemOriginItemDataStream.cs" />
-    <Compile Include="Destination\FileDirectoryMultiStream.cs" />
-    <Compile Include="Destination\ItemStore.cs" />
     <Compile Include="Destination\MultiStream.cs" />
     <Compile Include="Util\SerializableDictionary.cs" />
-    <Compile Include="Destination\ItemStoreItem.cs" />
     <Compile Include="Util\StreamPump.cs" />
     <Compile Include="VerifyEngine.cs" />
     <Compile Include="Util\StreamVerifier.cs" />
+    <Compile Include="Destination\DirectoryStore.cs" />
+    <Compile Include="Destination\Archive.cs" />
+    <Compile Include="Destination\ArchiveItem.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

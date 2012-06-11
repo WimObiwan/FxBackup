@@ -4,11 +4,11 @@ using System.IO;
 
 namespace FxBackupLib
 {
-	public class FileDirectoryMultiStream : MultiStream
+	public class DirectoryStore : MultiStream
 	{
 		string location;
 		
-		public FileDirectoryMultiStream (string location)
+		public DirectoryStore (string location)
 		{
 			this.location = location;
 			if (!Directory.Exists (location))
