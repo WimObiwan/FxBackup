@@ -3,29 +3,20 @@ using System.IO;
 using System.Collections.Generic;
 using System.Runtime.Serialization.Formatters.Binary;
 
-
 namespace FxBackupLib
 {
 	public partial class ItemStore
 	{
 		MultiStream physicalStore;
+		readonly Guid IndexStreamId = new Guid ("26108f76-8a54-4387-83ba-0ef468517a3b");
+			
+		List<Item> rootItems = new List<Item> ();
 		
-		readonly Guid IndexStreamId = new Guid("26108f76-8a54-4387-83ba-0ef468517a3b");
-		
-		[Serializable]
-		private struct Tuple<T1, T2> {
-		    public readonly T1 Item1;
-		    public readonly T2 Item2;
-		    public Tuple(T1 item1, T2 item2) { Item1 = item1; Item2 = item2;} 
+		public IEnumerable<Item> RootItems {
+			get {
+				return rootItems;
+			}
 		}
-		
-		private static class Tuple { // for type-inference goodness.
-		    public static Tuple<T1,T2> Create<T1,T2>(T1 item1, T2 item2) { 
-		        return new Tuple<T1,T2>(item1, item2); 
-		    }
-		}
-		
-		List<Item> rootItems = new List<Item>();
 		
 		public ItemStore (MultiStream physicalStore)
 		{
@@ -39,19 +30,42 @@ namespace FxBackupLib
 			return item;	
 		}
 		
-		private Stream CreateStream(Guid id)
+		private Stream CreateStream (Guid id)
 		{
 			return physicalStore.CreateStream (id);
+		}
+		
+		private Stream OpenStream (Guid id)
+		{
+			return physicalStore.OpenStream (id);
 		}
 		
 		public void WriteIndex ()
 		{
 			using (Stream stream = physicalStore.CreateStream (IndexStreamId)) {
-				foreach (Item item in rootItems) {
-					item.Serialize (stream);
+				using (BinaryWriter writer = new BinaryWriter(stream)) {
+					writer.Write (rootItems.Count);
+					foreach (Item item in rootItems) {
+						item.Serialize (writer);
+					}
 				}
 			}
 		}
+
+		public void ReadIndex ()
+		{
+			using (Stream stream = physicalStore.OpenStream (IndexStreamId)) {
+				using (BinaryReader reader = new BinaryReader(stream)) {
+					int count = reader.ReadInt32 ();
+					while (count-- > 0) {
+						Item item = new Item (this, null);
+						rootItems.Add (item);
+						item.Deserialize (reader);
+					}
+				}
+			}
+		}
+
 	}
 }
 

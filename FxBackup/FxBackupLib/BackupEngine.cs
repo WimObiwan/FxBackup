@@ -7,7 +7,7 @@ namespace FxBackupLib
 {
 	public class BackupEngine
 	{
-		BackupEngineStreamPump streamPump = new BackupEngineStreamPump();
+		StreamPump streamPump = new StreamPump();
 		public List<IOrigin> Origins { get; private set; }
 		public ItemStore ItemStore { get; private set; }
 		
@@ -38,13 +38,13 @@ namespace FxBackupLib
 			foreach (IOriginItemStream originItemStream in originItem.Streams) {
 				using (Stream inputStream = originItemStream.GetStream()) {
 					using (Stream outputStream = itemStoreItem.CreateStream (originItemStream.Id)) {
-						streamPump.Pump (inputStream, outputStream);
+						streamPump.Copy (inputStream, outputStream);
 					}
 				}
 			}
 			
 			foreach (IOriginItem subOriginItem in originItem.SubItems) {
-				ItemStore.Item itemStoreSubItem = itemStoreItem.CreateSubItem (subOriginItem.Name);
+				ItemStore.Item itemStoreSubItem = itemStoreItem.CreateChildItem (subOriginItem.Name);
 				ProcessOriginItem (itemStoreSubItem, subOriginItem);
 			}
 		}

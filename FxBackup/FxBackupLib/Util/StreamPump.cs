@@ -4,18 +4,18 @@ using System.IO;
 
 namespace FxBackupLib
 {
-	public class BackupEngineStreamPump
+	public class StreamPump
 	{
 		const int BufferSize = 64 * 1024; // 64KB
 
 		byte[] buffer;
 		
-		public BackupEngineStreamPump ()
+		public StreamPump ()
 		{
 			buffer = new byte[BufferSize];
 		}
 		
-		public void Pump(Stream input, Stream output)
+		public void Copy(Stream input, Stream output)
 		{
 			int len;
 			while ((len = input.Read(buffer, 0, BufferSize)) > 0) {
