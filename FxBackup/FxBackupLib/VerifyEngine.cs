@@ -7,37 +7,39 @@ namespace FxBackupLib
 {
 	public class VerifyEngine
 	{
-		StreamVerifier streamVerifier = new StreamVerifier();
+		StreamVerifier streamVerifier = new StreamVerifier ();
+
 		public List<IOrigin> Origins { get; private set; }
-		public Archive ItemStore { get; private set; }
+
+		public Archive Archive { get; private set; }
 		
-		List<Archive.Item> rootItems;
+		List<ArchiveItem> rootItems;
 		
-		public VerifyEngine (Archive itemStore)
+		public VerifyEngine (Archive archive)
 		{
 			Origins = new List<IOrigin> ();
-			ItemStore = itemStore;
+			Archive = archive;
 		}
 		
-		public bool Run ()
+		public bool Run (bool hashOnly)
 		{
 			bool same = true;
 			
-			ItemStore.ReadIndex ();
-			rootItems = ItemStore.RootItems.ToList ();
+			Archive.ReadIndex ();
+			rootItems = Archive.RootItems.ToList ();
 			foreach (IOrigin origin in Origins) {
-				if (!ProcessOrigin (origin))
+				if (!ProcessOrigin (origin, hashOnly))
 					same = false;
 			}
 			
-			foreach (Archive.Item item in rootItems) {
-				Console.WriteLine ("Only present in ItemStore: {0}", item.Name);
+			foreach (ArchiveItem item in rootItems) {
+				Console.WriteLine ("Only present in Archive: {0}", item.Name);
 			}
 			
 			return same;
 		}
 
-		bool ProcessOrigin (IOrigin origin)
+		bool ProcessOrigin (IOrigin origin, bool hashOnly)
 		{
 			bool same = true;
 			
@@ -45,7 +47,7 @@ namespace FxBackupLib
 			var item = rootItems.SingleOrDefault (p => p.Name == originItem.Name);
 			if (item != null) {
 				rootItems.Remove (item);
-				same = ProcessOriginItem (item, originItem);
+				same = ProcessOriginItem (item, originItem, hashOnly);
 			} else {
 				Console.WriteLine ("Only present in Origin: {0}", originItem.Name);
 			}
@@ -53,21 +55,26 @@ namespace FxBackupLib
 			return same;
 		}
 
-		bool ProcessOriginItem (Archive.Item itemStoreItem, IOriginItem originItem)
+		bool ProcessOriginItem (ArchiveItem archiveItem, IOriginItem originItem, bool hashOnly)
 		{
 			bool same = true;
 			
 			Console.WriteLine ("Verifying {0}", originItem.Name);
 			
-			var streams = itemStoreItem.Streams.ToList ();			
+			var streams = archiveItem.Streams.ToList ();			
 			foreach (IOriginItemStream originItemStream in originItem.Streams) {
-				Tuple<Guid, Guid> item = streams.SingleOrDefault (p => p.Item1 == originItemStream.Id);
-				if (item != null) {
-					streams.Remove (item);
+				ArchiveStream archiveStream = streams.SingleOrDefault (p => p.StreamId == originItemStream.Id);
+				if (archiveStream != null) {
+					streams.Remove (archiveStream);
 					using (Stream inputStream = originItemStream.GetStream()) {
-						using (Stream outputStream = itemStoreItem.OpenStream (originItemStream.Id)) {
-							if (!streamVerifier.Verify (inputStream, outputStream))
+						if (hashOnly) {
+							if (!streamVerifier.Verify (inputStream, archiveStream.Hash))
 								same = false;
+						} else {
+							using (Stream outputStream = Archive.OpenStream(archiveStream)) {
+								if (!streamVerifier.Verify (inputStream, outputStream))
+									same = false;
+							}
 						}
 					}
 				} else {
@@ -77,16 +84,16 @@ namespace FxBackupLib
 			}
 			
 			foreach (var stream in streams) {
-				Console.WriteLine ("Only present in ItemStore: {0}", stream.Item1);
+				Console.WriteLine ("Only present in Archive: {0}", stream.StreamId);
 				same = false;
 			}
 			
-			var childItems = itemStoreItem.ChildItems.ToList ();			
+			var childItems = archiveItem.ChildItems.ToList ();			
 			foreach (IOriginItem subOriginItem in originItem.SubItems) {
 				var item = childItems.SingleOrDefault (p => p.Name == subOriginItem.Name);
 				if (item != null) {
 					childItems.Remove (item);
-					if (!ProcessOriginItem (item, subOriginItem))
+					if (!ProcessOriginItem (item, subOriginItem, hashOnly))
 						same = false;
 				} else {
 					Console.WriteLine ("Only present in Origin: {0}", subOriginItem.Name);
@@ -95,7 +102,7 @@ namespace FxBackupLib
 			}
 			
 			foreach (var childItem in childItems) {
-				Console.WriteLine ("Only present in ItemStore: {0}", childItem.Name);
+				Console.WriteLine ("Only present in Archive: {0}", childItem.Name);
 				same = false;
 			}
 			

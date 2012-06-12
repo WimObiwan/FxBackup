@@ -5,14 +5,14 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace FxBackupLib
 {
-	public partial class Archive
+	public class Archive
 	{
 		MultiStream physicalStore;
 		readonly Guid IndexStreamId = new Guid ("26108f76-8a54-4387-83ba-0ef468517a3b");
 			
-		List<Item> rootItems = new List<Item> ();
+		List<ArchiveItem> rootItems = new List<ArchiveItem> ();
 		
-		public IEnumerable<Item> RootItems {
+		public IEnumerable<ArchiveItem> RootItems {
 			get {
 				return rootItems;
 			}
@@ -23,21 +23,22 @@ namespace FxBackupLib
 			this.physicalStore = physicalStore;
 		}
 		
-		public Item CreateRootItem (string itemName)
+		public ArchiveItem CreateRootItem (string itemName)
 		{
-			Item item = new Item (this, itemName);
+			ArchiveItem item = new ArchiveItem (this, itemName);
 			rootItems.Add (item);
 			return item;	
 		}
 		
-		private Stream CreateStream (Guid id)
+		internal Stream CreateStream (ArchiveStream archiveStream)
 		{
-			return physicalStore.CreateStream (id);
+			archiveStream.PhysicalStoreStreamId = Guid.NewGuid ();
+			return physicalStore.CreateStream (archiveStream.PhysicalStoreStreamId);
 		}
 		
-		private Stream OpenStream (Guid id)
+		internal Stream OpenStream (ArchiveStream archiveStream)
 		{
-			return physicalStore.OpenStream (id);
+			return physicalStore.OpenStream (archiveStream.PhysicalStoreStreamId);
 		}
 		
 		public void WriteIndex ()
@@ -45,7 +46,7 @@ namespace FxBackupLib
 			using (Stream stream = physicalStore.CreateStream (IndexStreamId)) {
 				using (BinaryWriter writer = new BinaryWriter(stream)) {
 					writer.Write (rootItems.Count);
-					foreach (Item item in rootItems) {
+					foreach (ArchiveItem item in rootItems) {
 						item.Serialize (writer);
 					}
 				}
@@ -58,7 +59,7 @@ namespace FxBackupLib
 				using (BinaryReader reader = new BinaryReader(stream)) {
 					int count = reader.ReadInt32 ();
 					while (count-- > 0) {
-						Item item = new Item (this, null);
+						ArchiveItem item = new ArchiveItem (this, null);
 						rootItems.Add (item);
 						item.Deserialize (reader);
 					}

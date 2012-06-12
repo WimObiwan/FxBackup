@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-
+using System.Security.Cryptography;
 
 namespace FxBackupLib
 {
@@ -10,6 +10,7 @@ namespace FxBackupLib
 
 		byte[] buffer1;
 		byte[] buffer2;
+		HashAlgorithm hashAlgorithm = new SHA512Managed ();
 		
 		public StreamVerifier ()
 		{
@@ -23,9 +24,10 @@ namespace FxBackupLib
 			
 			int len1, len2;
 			do {
-				len1 = input1.Read(buffer1, 0, BufferSize);
-				len2 = input2.Read(buffer2, 0, BufferSize);
-				if (len1 == 0 || len2 == 0) break;
+				len1 = input1.Read (buffer1, 0, BufferSize);
+				len2 = input2.Read (buffer2, 0, BufferSize);
+				if (len1 == 0 || len2 == 0)
+					break;
 				for (int i = 0; i < len1; i++) {
 					if (buffer1 [i] != buffer2 [i]) {
 						same = false;
@@ -39,6 +41,33 @@ namespace FxBackupLib
 				same = false;
 				Console.WriteLine ("Different lengths");
 			}
+			
+			return same;
+		}
+		
+		public bool Verify (Stream input, byte[] hash)
+		{
+			bool same = true;
+			hashAlgorithm.Initialize ();
+			
+			int len;
+			while ((len = input.Read (buffer1, 0, BufferSize)) > 0) {			       
+				hashAlgorithm.TransformBlock (buffer1, 0, len, buffer1, 0);
+			}
+			
+			hashAlgorithm.TransformFinalBlock (new byte[0], 0, 0);
+			
+			if (hash.Length != hashAlgorithm.Hash.Length) {
+			} else {
+				for (int i = 0; i < hash.Length; i++) {
+					if (hash [i] != hashAlgorithm.Hash [i]) {
+						same = false;
+						Console.WriteLine ("Different hash");
+						break;
+					}
+				}
+			}
+			hashAlgorithm.Clear ();
 			
 			return same;
 		}

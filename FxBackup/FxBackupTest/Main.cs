@@ -16,23 +16,24 @@ namespace FxBackupTest
 		{
 			Directory.Delete (dest, true);
 			Backup ();
-			Verify ();
+			Verify (true);
+			Verify (false);
 		}
 		
 		static void Backup ()
 		{
-			Archive itemStore = new Archive (new DirectoryStore (dest));
-			BackupEngine engine = new BackupEngine (itemStore);
+			Archive archive = new Archive (new DirectoryStore (dest));
+			BackupEngine engine = new BackupEngine (archive);
 			engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
 			engine.Run ();			
 		}
 
-		static void Verify ()
+		static void Verify (bool hashOnly)
 		{
-			Archive itemStore = new Archive (new DirectoryStore (dest));
-			VerifyEngine engine = new VerifyEngine (itemStore);
+			Archive archive = new Archive (new DirectoryStore (dest));
+			VerifyEngine engine = new VerifyEngine (archive);
 			engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
-			bool same = engine.Run ();
+			bool same = engine.Run (hashOnly);
 			if (same)
 				Console.WriteLine ("Verification succeeded");
 			else
