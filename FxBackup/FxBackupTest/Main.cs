@@ -16,8 +16,9 @@ namespace FxBackupTest
 		{
 			Directory.Delete (dest, true);
 			Backup ();
-			Verify (true);
-			Verify (false);
+			Verify (VerifyEngine.VerificationType.ArchiveHashWithArchiveData);
+			Verify (VerifyEngine.VerificationType.ArchiveHashWithOriginData);
+			Verify (VerifyEngine.VerificationType.ArchiveDataWithOriginData);
 		}
 		
 		static void Backup ()
@@ -28,12 +29,13 @@ namespace FxBackupTest
 			engine.Run ();			
 		}
 
-		static void Verify (bool hashOnly)
+		static void Verify (VerifyEngine.VerificationType verificationType)
 		{
 			Archive archive = new Archive (new DirectoryStore (dest));
 			VerifyEngine engine = new VerifyEngine (archive);
-			engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
-			bool same = engine.Run (hashOnly);
+			if (verificationType != VerifyEngine.VerificationType.ArchiveHashWithArchiveData)
+				engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
+			bool same = engine.Run (verificationType);
 			if (same)
 				Console.WriteLine ("Verification succeeded");
 			else

@@ -15,31 +15,45 @@ namespace FxBackupLib
 		
 		List<ArchiveItem> rootItems;
 		
+		public enum VerificationType
+		{
+			ArchiveHashWithOriginData,
+			ArchiveDataWithOriginData,
+			ArchiveHashWithArchiveData,
+		}
+		
 		public VerifyEngine (Archive archive)
 		{
 			Origins = new List<IOrigin> ();
 			Archive = archive;
 		}
 		
-		public bool Run (bool hashOnly)
+		public bool Run (VerificationType verificationType)
 		{
 			bool same = true;
 			
 			Archive.ReadIndex ();
-			rootItems = Archive.RootItems.ToList ();
-			foreach (IOrigin origin in Origins) {
-				if (!ProcessOrigin (origin, hashOnly))
+			if (verificationType == VerificationType.ArchiveHashWithArchiveData) {
+				foreach (ArchiveItem rootItem in Archive.RootItems) {
+					if (!ProcessArchiveItem (rootItem))
+						same = false;
+				}
+			} else {
+				rootItems = Archive.RootItems.ToList ();
+				foreach (IOrigin origin in Origins) {
+					if (!ProcessOrigin (origin, verificationType))
+						same = false;
+				}
+		
+				foreach (ArchiveItem item in rootItems) {
+					Console.WriteLine ("Only present in Archive: {0}", item.Name);
 					same = false;
+				}
 			}
-			
-			foreach (ArchiveItem item in rootItems) {
-				Console.WriteLine ("Only present in Archive: {0}", item.Name);
-			}
-			
 			return same;
 		}
 
-		bool ProcessOrigin (IOrigin origin, bool hashOnly)
+		bool ProcessOrigin (IOrigin origin, VerificationType verificationType)
 		{
 			bool same = true;
 			
@@ -47,15 +61,16 @@ namespace FxBackupLib
 			var item = rootItems.SingleOrDefault (p => p.Name == originItem.Name);
 			if (item != null) {
 				rootItems.Remove (item);
-				same = ProcessOriginItem (item, originItem, hashOnly);
+				same = ProcessOriginItem (item, originItem, verificationType);
 			} else {
 				Console.WriteLine ("Only present in Origin: {0}", originItem.Name);
+				same = false;
 			}
 			
 			return same;
 		}
 
-		bool ProcessOriginItem (ArchiveItem archiveItem, IOriginItem originItem, bool hashOnly)
+		bool ProcessOriginItem (ArchiveItem archiveItem, IOriginItem originItem, VerificationType verificationType)
 		{
 			bool same = true;
 			
@@ -66,14 +81,21 @@ namespace FxBackupLib
 				ArchiveStream archiveStream = streams.SingleOrDefault (p => p.StreamId == originItemStream.Id);
 				if (archiveStream != null) {
 					streams.Remove (archiveStream);
-					using (Stream inputStream = originItemStream.GetStream()) {
-						if (hashOnly) {
-							if (!streamVerifier.Verify (inputStream, archiveStream.Hash))
+					if (verificationType == VerificationType.ArchiveHashWithArchiveData) {
+						using (Stream outputStream = Archive.OpenStream(archiveStream)) {
+							if (!streamVerifier.Verify (outputStream, archiveStream.Hash))
 								same = false;
-						} else {
-							using (Stream outputStream = Archive.OpenStream(archiveStream)) {
-								if (!streamVerifier.Verify (inputStream, outputStream))
+						}
+					} else {
+						using (Stream inputStream = originItemStream.GetStream()) {
+							if (verificationType == VerificationType.ArchiveHashWithOriginData) {
+								if (!streamVerifier.Verify (inputStream, archiveStream.Hash))
 									same = false;
+							} else if (verificationType == VerificationType.ArchiveDataWithOriginData) {
+								using (Stream outputStream = Archive.OpenStream(archiveStream)) {
+									if (!streamVerifier.Verify (inputStream, outputStream))
+										same = false;
+								}
 							}
 						}
 					}
@@ -93,7 +115,7 @@ namespace FxBackupLib
 				var item = childItems.SingleOrDefault (p => p.Name == subOriginItem.Name);
 				if (item != null) {
 					childItems.Remove (item);
-					if (!ProcessOriginItem (item, subOriginItem, hashOnly))
+					if (!ProcessOriginItem (item, subOriginItem, verificationType))
 						same = false;
 				} else {
 					Console.WriteLine ("Only present in Origin: {0}", subOriginItem.Name);
@@ -108,6 +130,26 @@ namespace FxBackupLib
 			
 			return same;
 		}
+
+		bool ProcessArchiveItem (ArchiveItem archiveItem)
+		{
+			bool same = true;
+			
+			foreach (ArchiveStream archiveStream in archiveItem.Streams) {
+				using (Stream outputStream = Archive.OpenStream(archiveStream)) {
+					if (!streamVerifier.Verify (outputStream, archiveStream.Hash))
+						same = false;
+				}
+			}
+			
+			foreach (ArchiveItem archiveSubItem in archiveItem.ChildItems) {
+				if (!ProcessArchiveItem (archiveSubItem))
+					same = false;
+			}
+			
+			return same;
+		}
+
 	}
 }
 
