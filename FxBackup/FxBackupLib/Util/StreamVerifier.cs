@@ -6,6 +6,8 @@ namespace FxBackupLib
 {
 	public class StreamVerifier
 	{
+		protected static readonly log4net.ILog logger = log4net.LogManager.GetLogger (typeof(StreamVerifier));
+
 		const int BufferSize = 64 * 1024; // 64KB
 
 		byte[] buffer1;
@@ -31,7 +33,7 @@ namespace FxBackupLib
 				for (int i = 0; i < len1; i++) {
 					if (buffer1 [i] != buffer2 [i]) {
 						same = false;
-						Console.WriteLine ("Different data");
+						logger.Warn ("Different data");
 						break;
 					}
 				}
@@ -39,7 +41,7 @@ namespace FxBackupLib
 			
 			if (len1 > 0 || len2 > 0) {
 				same = false;
-				Console.WriteLine ("Different lengths");
+				logger.Warn ("Different lengths");
 			}
 			
 			return same;
@@ -62,7 +64,7 @@ namespace FxBackupLib
 				for (int i = 0; i < hash.Length; i++) {
 					if (hash [i] != hashAlgorithm.Hash [i]) {
 						same = false;
-						Console.WriteLine ("Different hash");
+						logger.Warn ("Different hash");
 						break;
 					}
 				}

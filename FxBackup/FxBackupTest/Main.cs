@@ -7,6 +7,7 @@ namespace FxBackupTest
 	class MainClass
 	{
 		static string dest = @"c:\temp\fxbtest";
+
 		public static void Main (string[] args)
 		{
 			Run ();
@@ -27,6 +28,23 @@ namespace FxBackupTest
 			Archive archive = new Archive (new DirectoryStore (dest));
 			BackupEngine engine = new BackupEngine (archive);
 			engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
+			engine.Progress += delegate(object sender, ProgressEventArgs arg) {
+				switch (arg.State) {
+				case State.BeginItem:
+					Console.WriteLine ("{0}...", arg.OriginItem.Path);
+					break;
+				case State.BeginStream:
+					Console.WriteLine ("   * Stream {0}", arg.OriginItemStream.Name);
+					break;
+				case State.Block:
+					if (arg.Total > 0)
+						Console.WriteLine ("       {0} {1}%", arg.Done, arg.Done * 100 / arg.Total);
+					else
+						Console.WriteLine ("       {0}", arg.Done);
+					Console.CursorTop -= 1;
+					break;
+				}
+			};
 			engine.Run ();			
 		}
 

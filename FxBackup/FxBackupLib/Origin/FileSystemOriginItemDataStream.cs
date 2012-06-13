@@ -21,6 +21,12 @@ namespace FxBackupLib
 				return StreamId;
 			}
 		}
+		
+		public string Name {
+			get {
+				return "Data";
+			}
+		}
 
 		public System.IO.Stream GetStream ()
 		{

@@ -13,6 +13,7 @@ namespace FxBackupLib
 		}
 		
 		public string Name { get { return FileSystemInfo.Name; } }
+		public string Path { get { return FileSystemInfo.FullName; } }
 
 		public System.Collections.Generic.IEnumerable<IOriginItem> SubItems {
 			get {

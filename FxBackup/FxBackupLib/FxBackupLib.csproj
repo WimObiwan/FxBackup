@@ -54,6 +54,7 @@
     <Compile Include="Destination\Archive.cs" />
     <Compile Include="Destination\ArchiveItem.cs" />
     <Compile Include="Destination\ArchiveStream.cs" />
+    <Compile Include="ProgressEventArgs.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
