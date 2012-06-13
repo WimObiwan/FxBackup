@@ -9,7 +9,10 @@ namespace FxBackupLib
 	{
 		string Name { get; }
 		string Path { get; }
+		int Type { get; }
 		Stream OpenStream();
-		System.Collections.Generic.IEnumerable<IOriginItem> SubItems { get; }
+		Stream CreateStream();
+		IOriginItem CreateChildItem(string name, int type);
+		System.Collections.Generic.IEnumerable<IOriginItem> ChildItems { get; }
 	}
 }

@@ -110,7 +110,7 @@ namespace FxBackupLib
 			}
 			
 			var childItems = archiveItem.ChildItems.ToList ();			
-			foreach (IOriginItem subOriginItem in originItem.SubItems) {
+			foreach (IOriginItem subOriginItem in originItem.ChildItems) {
 				var item = childItems.SingleOrDefault (p => p.Name == subOriginItem.Name);
 				if (item != null) {
 					childItems.Remove (item);

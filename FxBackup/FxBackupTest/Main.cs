@@ -6,7 +6,8 @@ namespace FxBackupTest
 {
 	class MainClass
 	{
-		static string dest = @"c:\temp\fxbtest";
+		static string archivePath = @"c:\temp\fxbtest";
+		static string restorePath = @"c:\temp\fxbtestrest";
 
 		public static void Main (string[] args)
 		{
@@ -15,16 +16,19 @@ namespace FxBackupTest
 
 		static void Run ()
 		{
-			Directory.Delete (dest, true);
+			Directory.Delete (archivePath, true);
+			Directory.Delete (restorePath, true);
+			Directory.CreateDirectory (restorePath);
 			Backup ();
 			Verify (VerifyEngine.VerificationType.ArchiveHashWithArchiveData);
 			Verify (VerifyEngine.VerificationType.ArchiveHashWithOriginData);
 			Verify (VerifyEngine.VerificationType.ArchiveDataWithOriginData);
+			Restore ();
 		}
 		
 		static void Backup ()
 		{
-			Archive archive = new Archive (new DirectoryStore (dest));
+			Archive archive = new Archive (new DirectoryStore (archivePath));
 			BackupEngine engine = new BackupEngine (archive);
 			engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
 			engine.Progress += delegate(object sender, OriginProgressEventArgs arg) {
@@ -50,7 +54,7 @@ namespace FxBackupTest
 
 		static void Verify (VerifyEngine.VerificationType verificationType)
 		{
-			Archive archive = new Archive (new DirectoryStore (dest));
+			Archive archive = new Archive (new DirectoryStore (archivePath));
 			VerifyEngine engine = new VerifyEngine (archive);
 			if (verificationType != VerifyEngine.VerificationType.ArchiveHashWithArchiveData)
 				engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
@@ -61,18 +65,14 @@ namespace FxBackupTest
 				Console.WriteLine ("Verification failed");
 		}
 		
-		/*
 		static void Restore ()
 		{
-			Archive archive = new Archive (new DirectoryStore (dest));
-			RestoreEngine engine = new RestoreEngine (archive, @"c:\temp\fxbtestrest\");
-			engine.Progress += delegate(object sender, ArchiveProgressEventArgs arg) {
+			Archive archive = new Archive (new DirectoryStore (archivePath));
+			RestoreEngine engine = new RestoreEngine (new FileSystemOrigin (restorePath), archive);
+			engine.Progress += delegate(object sender, OriginProgressEventArgs arg) {
 				switch (arg.State) {
 				case State.BeginItem:
-					Console.WriteLine ("{0}...", arg.Path);
-					break;
-				case State.BeginStream:
-					Console.WriteLine ("   * Stream {0}", arg.ArchiveStream.StreamId);
+					Console.WriteLine ("{0}...", arg.OriginItem.Path);
 					break;
 				case State.Block:
 					if (arg.Total > 0)
@@ -89,7 +89,6 @@ namespace FxBackupTest
 			};
 			engine.Run ();
 		}
-		*/
 	}
 }
 

@@ -39,7 +39,7 @@ namespace FxBackupLib
 		{
 			IOriginItem originItem = origin.GetRootItem ();
 			logger.DebugFormat ("Processing Root Origin {0}", originItem.Name);
-			ArchiveItem archiveItem = Archive.CreateRootItem (Path.GetFileName (originItem.Name));
+			ArchiveItem archiveItem = Archive.CreateRootItem (Path.GetFileName (originItem.Name), originItem.Type);
 			ProcessOriginItem (archiveItem, originItem);
 		}
 
@@ -90,7 +90,7 @@ namespace FxBackupLib
 		void ProcessOriginChildItems (ArchiveItem archiveItem, IOriginItem originItem)
 		{
 			bool firstDone = false;
-			foreach (IOriginItem originSubItem in originItem.SubItems) {
+			foreach (IOriginItem originSubItem in originItem.ChildItems) {
 				if (!firstDone) {
 					if (Progress != null)
 						Progress (
@@ -99,7 +99,7 @@ namespace FxBackupLib
 						);
 					firstDone = true;
 				}
-				ArchiveItem archiveSubItem = archiveItem.CreateChildItem (originSubItem.Name);
+				ArchiveItem archiveSubItem = archiveItem.CreateChildItem (originSubItem.Name, originSubItem.Type);
 				ProcessOriginItem (archiveSubItem, originSubItem);
 			}
 			if (!firstDone) {

@@ -9,17 +9,23 @@ namespace FxBackupLib
 	{
 		Archive archive;
 
-		internal ArchiveItem (Archive archive, string name)
+		internal ArchiveItem ()
 		{
-			this.archive = archive;
-			Name = name;
 			ChildItems = new List<ArchiveItem> ();
 		}
 		
+		internal ArchiveItem (Archive archive, string name, int type)
+			: this()
+		{
+			this.archive = archive;
+			Name = name;
+			Type = type;
+		}
+		
 		public string Name { get; private set; }
-
+		public int Type { get; private set; }
 		internal List<ArchiveItem> ChildItems;
-		public Guid PhysicalStoreDataStreamId { get; set; }
+		public Guid PhysicalStoreDataStreamId { get; private set; }
 		public byte[] DataStreamHash { get; set; }
 		
 		public Stream CreateDataStream ()
@@ -36,9 +42,9 @@ namespace FxBackupLib
 				return archive.OpenStream (PhysicalStoreDataStreamId);
 		}
 
-		public ArchiveItem CreateChildItem (string name)
+		public ArchiveItem CreateChildItem (string name, int type)
 		{
-			ArchiveItem subItem = new ArchiveItem (archive, name);
+			ArchiveItem subItem = new ArchiveItem (archive, name, type);
 			ChildItems.Add (subItem);
 			return subItem;
 		}
@@ -46,6 +52,7 @@ namespace FxBackupLib
 		internal void Serialize (BinaryWriter writer)
 		{
 			writer.Write (Name);
+			writer.Write (Type);
 			writer.Write (PhysicalStoreDataStreamId.ToByteArray ()); 
 			if (DataStreamHash != null) {
 				writer.Write ((byte)DataStreamHash.Length);
@@ -59,9 +66,11 @@ namespace FxBackupLib
 			}
 		}
 
-		public void Deserialize (BinaryReader reader)
+		public void Deserialize (Archive archive, BinaryReader reader)
 		{
+			this.archive = archive;
 			Name = reader.ReadString ();
+			Type = reader.ReadInt32 ();
 			byte[] by = new byte[16];
 			reader.Read (by, 0, 16);
 			PhysicalStoreDataStreamId = new Guid (by);
@@ -73,9 +82,9 @@ namespace FxBackupLib
 			}
 			int cnt = reader.ReadInt32 ();
 			while (cnt-- > 0) {
-				ArchiveItem subItem = new ArchiveItem (archive, null);
+				ArchiveItem subItem = new ArchiveItem ();
 				ChildItems.Add (subItem);
-				subItem.Deserialize (reader);
+				subItem.Deserialize (archive, reader);
 			}
 		}
 	}

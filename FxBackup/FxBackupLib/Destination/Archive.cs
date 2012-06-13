@@ -23,9 +23,9 @@ namespace FxBackupLib
 			this.physicalStore = physicalStore;
 		}
 		
-		public ArchiveItem CreateRootItem (string itemName)
+		public ArchiveItem CreateRootItem (string itemName, int type)
 		{
-			ArchiveItem item = new ArchiveItem (this, itemName);
+			ArchiveItem item = new ArchiveItem (this, itemName, type);
 			rootItems.Add (item);
 			return item;	
 		}
@@ -58,9 +58,9 @@ namespace FxBackupLib
 				using (BinaryReader reader = new BinaryReader(stream)) {
 					int count = reader.ReadInt32 ();
 					while (count-- > 0) {
-						ArchiveItem item = new ArchiveItem (this, null);
+						ArchiveItem item = new ArchiveItem ();
 						rootItems.Add (item);
-						item.Deserialize (reader);
+						item.Deserialize (this, reader);
 					}
 				}
 			}
