@@ -7,6 +7,7 @@ namespace FxBackupLib
 {
 	public class VerifyEngine
 	{
+		protected static readonly log4net.ILog logger = log4net.LogManager.GetLogger (typeof(VerifyEngine));
 		StreamVerifier streamVerifier = new StreamVerifier ();
 
 		public List<IOrigin> Origins { get; private set; }
@@ -30,6 +31,8 @@ namespace FxBackupLib
 		
 		public bool Run (VerificationType verificationType)
 		{
+			logger.Info ("Starting Verify");
+			
 			bool same = true;
 			
 			Archive.ReadIndex ();
@@ -46,10 +49,12 @@ namespace FxBackupLib
 				}
 		
 				foreach (ArchiveItem item in rootItems) {
-					Console.WriteLine ("Only present in Archive: {0}", item.Name);
+					logger.WarnFormat("Only present in Archive: {0}", item.Name);
 					same = false;
 				}
 			}
+			
+			logger.Info ("Finished Verify");
 			return same;
 		}
 
@@ -63,7 +68,7 @@ namespace FxBackupLib
 				rootItems.Remove (item);
 				same = ProcessOriginItem (item, originItem, verificationType);
 			} else {
-				Console.WriteLine ("Only present in Origin: {0}", originItem.Name);
+				logger.WarnFormat ("Only present in origin: {0}", item.Name);
 				same = false;
 			}
 			
@@ -74,7 +79,7 @@ namespace FxBackupLib
 		{
 			bool same = true;
 			
-			Console.WriteLine ("Verifying {0}", originItem.Name);
+			logger.InfoFormat ("Verifying {0}", originItem.Name);
 			
 			var streams = archiveItem.Streams.ToList ();			
 			foreach (IOriginItemStream originItemStream in originItem.Streams) {
@@ -100,13 +105,13 @@ namespace FxBackupLib
 						}
 					}
 				} else {
-					Console.WriteLine ("Only present in Origin: {0}", originItemStream.Id);
+					logger.WarnFormat ("Only present in Origin: {0}", originItemStream.Id);
 					same = false;
 				}
 			}
 			
 			foreach (var stream in streams) {
-				Console.WriteLine ("Only present in Archive: {0}", stream.StreamId);
+				logger.WarnFormat ("Only present in Archive: {0}", stream.StreamId);
 				same = false;
 			}
 			
@@ -118,13 +123,13 @@ namespace FxBackupLib
 					if (!ProcessOriginItem (item, subOriginItem, verificationType))
 						same = false;
 				} else {
-					Console.WriteLine ("Only present in Origin: {0}", subOriginItem.Name);
+					logger.WarnFormat ("Only present in Origin: {0}", subOriginItem.Name);
 					same = false;
 				}
 			}
 			
 			foreach (var childItem in childItems) {
-				Console.WriteLine ("Only present in Archive: {0}", childItem.Name);
+				logger.WarnFormat ("Only present in Archive: {0}", childItem.Name);
 				same = false;
 			}
 			

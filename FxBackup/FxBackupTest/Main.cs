@@ -19,6 +19,7 @@ namespace FxBackupTest
 			Verify (VerifyEngine.VerificationType.ArchiveHashWithArchiveData);
 			Verify (VerifyEngine.VerificationType.ArchiveHashWithOriginData);
 			Verify (VerifyEngine.VerificationType.ArchiveDataWithOriginData);
+			//Restore ();
 		}
 		
 		static void Backup ()
