@@ -14,24 +14,26 @@ namespace FxBackupLib
 			this.archive = archive;
 			Name = name;
 			ChildItems = new List<ArchiveItem> ();
-			Streams = new List<ArchiveStream> ();
 		}
 		
 		public string Name { get; private set; }
 
 		internal List<ArchiveItem> ChildItems;
-		internal List<ArchiveStream> Streams;
+		public Guid PhysicalStoreDataStreamId { get; set; }
+		public byte[] DataStreamHash { get; set; }
 		
-		public ArchiveStream CreateStream (Guid streamId)
+		public Stream CreateDataStream ()
 		{
-			ArchiveStream archiveStream = new ArchiveStream (streamId);
-			Streams.Add (archiveStream);
-			return archiveStream;
+			PhysicalStoreDataStreamId = Guid.NewGuid ();
+			return archive.CreateStream (PhysicalStoreDataStreamId);
 		}
 		
-		public ArchiveStream GetStream (Guid streamId)
+		public Stream OpenDataStream ()
 		{
-			return Streams.Single (p => p.StreamId == streamId);
+			if (PhysicalStoreDataStreamId == Guid.Empty)
+				return null;
+			else
+				return archive.OpenStream (PhysicalStoreDataStreamId);
 		}
 
 		public ArchiveItem CreateChildItem (string name)
@@ -44,42 +46,36 @@ namespace FxBackupLib
 		internal void Serialize (BinaryWriter writer)
 		{
 			writer.Write (Name);
+			writer.Write (PhysicalStoreDataStreamId.ToByteArray ()); 
+			if (DataStreamHash != null) {
+				writer.Write ((byte)DataStreamHash.Length);
+				writer.Write (DataStreamHash);
+			} else {
+				writer.Write ((byte)0);
+			}
 			writer.Write (ChildItems.Count);
 			foreach (ArchiveItem item in ChildItems) {
 				item.Serialize (writer);
-			}
-			writer.Write (Streams.Count);				
-			foreach (var streamItem in Streams) {
-				writer.Write (streamItem.StreamId.ToByteArray ());
-				writer.Write (streamItem.PhysicalStoreStreamId.ToByteArray ()); 
-				if (streamItem.Hash != null) {
-					writer.Write ((byte)streamItem.Hash.Length);
-					writer.Write (streamItem.Hash);
-				} else {
-					writer.Write ((byte)0);
-				}
 			}
 		}
 
 		public void Deserialize (BinaryReader reader)
 		{
 			Name = reader.ReadString ();
+			byte[] by = new byte[16];
+			reader.Read (by, 0, 16);
+			PhysicalStoreDataStreamId = new Guid (by);
+			int hashLen = reader.ReadByte ();
+			if (hashLen > 0) {
+				DataStreamHash = reader.ReadBytes (hashLen);
+			} else {
+				DataStreamHash = null;
+			}
 			int cnt = reader.ReadInt32 ();
 			while (cnt-- > 0) {
 				ArchiveItem subItem = new ArchiveItem (archive, null);
 				ChildItems.Add (subItem);
 				subItem.Deserialize (reader);
-			}
-			cnt = reader.ReadInt32 ();
-			while (cnt-- > 0) {
-				byte[] by = new byte[16];
-				reader.Read (by, 0, 16);
-				ArchiveStream archiveStream = new ArchiveStream (new Guid (by));
-				reader.Read (by, 0, 16);
-				archiveStream.PhysicalStoreStreamId = new Guid (by);
-				int hashLen = reader.ReadByte ();
-				archiveStream.Hash = reader.ReadBytes (hashLen);
-				Streams.Add (archiveStream);
 			}
 		}
 	}

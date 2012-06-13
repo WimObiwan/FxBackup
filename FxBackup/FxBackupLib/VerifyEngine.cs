@@ -49,7 +49,7 @@ namespace FxBackupLib
 				}
 		
 				foreach (ArchiveItem item in rootItems) {
-					logger.WarnFormat("Only present in Archive: {0}", item.Name);
+					logger.WarnFormat ("Only present in Archive: {0}", item.Name);
 					same = false;
 				}
 			}
@@ -81,38 +81,32 @@ namespace FxBackupLib
 			
 			logger.InfoFormat ("Verifying {0}", originItem.Name);
 			
-			var streams = archiveItem.Streams.ToList ();			
-			foreach (IOriginItemStream originItemStream in originItem.Streams) {
-				ArchiveStream archiveStream = streams.SingleOrDefault (p => p.StreamId == originItemStream.Id);
-				if (archiveStream != null) {
-					streams.Remove (archiveStream);
-					if (verificationType == VerificationType.ArchiveHashWithArchiveData) {
-						using (Stream outputStream = Archive.OpenStream(archiveStream)) {
-							if (!streamVerifier.Verify (outputStream, archiveStream.Hash))
-								same = false;
-						}
-					} else {
-						using (Stream inputStream = originItemStream.GetStream()) {
-							if (verificationType == VerificationType.ArchiveHashWithOriginData) {
-								if (!streamVerifier.Verify (inputStream, archiveStream.Hash))
+			using (Stream inputStream = originItem.OpenStream()) {
+				if (inputStream != null) {
+					if (verificationType == VerificationType.ArchiveHashWithOriginData) {
+						if (!streamVerifier.Verify (inputStream, archiveItem.DataStreamHash))
+							same = false;
+					} else if (verificationType == VerificationType.ArchiveDataWithOriginData) {
+						using (Stream outputStream = archiveItem.OpenDataStream()) {
+							if (outputStream != null) {
+								if (!streamVerifier.Verify (inputStream, outputStream))
 									same = false;
-							} else if (verificationType == VerificationType.ArchiveDataWithOriginData) {
-								using (Stream outputStream = Archive.OpenStream(archiveStream)) {
-									if (!streamVerifier.Verify (inputStream, outputStream))
-										same = false;
-								}
+							} else {
+								logger.WarnFormat ("Only present in Origin: {0}", originItem.Name);
+								same = false;
 							}
 						}
+					} else {
+						throw new InvalidOperationException ();
 					}
 				} else {
-					logger.WarnFormat ("Only present in Origin: {0}", originItemStream.Id);
-					same = false;
+					using (Stream outputStream = archiveItem.OpenDataStream()) {
+						if (outputStream != null) {
+							logger.WarnFormat ("Only present in Archive: {0}", archiveItem.Name);
+							same = false;
+						}
+					}
 				}
-			}
-			
-			foreach (var stream in streams) {
-				logger.WarnFormat ("Only present in Archive: {0}", stream.StreamId);
-				same = false;
 			}
 			
 			var childItems = archiveItem.ChildItems.ToList ();			
@@ -140,9 +134,9 @@ namespace FxBackupLib
 		{
 			bool same = true;
 			
-			foreach (ArchiveStream archiveStream in archiveItem.Streams) {
-				using (Stream outputStream = Archive.OpenStream(archiveStream)) {
-					if (!streamVerifier.Verify (outputStream, archiveStream.Hash))
+			using (Stream outputStream = archiveItem.OpenDataStream()) {
+				if (outputStream != null) {
+					if (!streamVerifier.Verify (outputStream, archiveItem.DataStreamHash))
 						same = false;
 				}
 			}
@@ -157,4 +151,3 @@ namespace FxBackupLib
 
 	}
 }
-

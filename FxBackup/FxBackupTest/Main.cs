@@ -20,7 +20,6 @@ namespace FxBackupTest
 			Verify (VerifyEngine.VerificationType.ArchiveHashWithArchiveData);
 			Verify (VerifyEngine.VerificationType.ArchiveHashWithOriginData);
 			Verify (VerifyEngine.VerificationType.ArchiveDataWithOriginData);
-			//Restore ();
 		}
 		
 		static void Backup ()
@@ -28,17 +27,18 @@ namespace FxBackupTest
 			Archive archive = new Archive (new DirectoryStore (dest));
 			BackupEngine engine = new BackupEngine (archive);
 			engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
-			engine.Progress += delegate(object sender, ProgressEventArgs arg) {
+			engine.Progress += delegate(object sender, OriginProgressEventArgs arg) {
 				switch (arg.State) {
 				case State.BeginItem:
 					Console.WriteLine ("{0}...", arg.OriginItem.Path);
 					break;
-				case State.BeginStream:
-					Console.WriteLine ("   * Stream {0}", arg.OriginItemStream.Name);
-					break;
 				case State.Block:
 					if (arg.Total > 0)
-						Console.WriteLine ("       {0} {1}%", arg.Done, arg.Done * 100 / arg.Total);
+						Console.WriteLine (
+							"       {0} {1}%",
+							arg.Done,
+							arg.Done * 100 / arg.Total
+						);
 					else
 						Console.WriteLine ("       {0}", arg.Done);
 					Console.CursorTop -= 1;
@@ -60,5 +60,36 @@ namespace FxBackupTest
 			else
 				Console.WriteLine ("Verification failed");
 		}
+		
+		/*
+		static void Restore ()
+		{
+			Archive archive = new Archive (new DirectoryStore (dest));
+			RestoreEngine engine = new RestoreEngine (archive, @"c:\temp\fxbtestrest\");
+			engine.Progress += delegate(object sender, ArchiveProgressEventArgs arg) {
+				switch (arg.State) {
+				case State.BeginItem:
+					Console.WriteLine ("{0}...", arg.Path);
+					break;
+				case State.BeginStream:
+					Console.WriteLine ("   * Stream {0}", arg.ArchiveStream.StreamId);
+					break;
+				case State.Block:
+					if (arg.Total > 0)
+						Console.WriteLine (
+							"       {0} {1}%",
+							arg.Done,
+							arg.Done * 100 / arg.Total
+						);
+					else
+						Console.WriteLine ("       {0}", arg.Done);
+					Console.CursorTop -= 1;
+					break;
+				}
+			};
+			engine.Run ();
+		}
+		*/
 	}
 }
+

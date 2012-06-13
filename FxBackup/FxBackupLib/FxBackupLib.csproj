@@ -43,8 +43,6 @@
     <Compile Include="Origin\IOriginItem.cs" />
     <Compile Include="Origin\FileSystemOrigin.cs" />
     <Compile Include="Origin\FileSystemOriginItem.cs" />
-    <Compile Include="Origin\IOriginItemStream.cs" />
-    <Compile Include="Origin\FileSystemOriginItemDataStream.cs" />
     <Compile Include="Destination\MultiStream.cs" />
     <Compile Include="Util\SerializableDictionary.cs" />
     <Compile Include="Util\StreamPump.cs" />
@@ -53,8 +51,9 @@
     <Compile Include="Destination\DirectoryStore.cs" />
     <Compile Include="Destination\Archive.cs" />
     <Compile Include="Destination\ArchiveItem.cs" />
-    <Compile Include="Destination\ArchiveStream.cs" />
-    <Compile Include="ProgressEventArgs.cs" />
+    <Compile Include="RestoreEngine.cs" />
+    <Compile Include="OriginProgressEventArgs.cs" />
+    <Compile Include="ArchiveProgressEventArgs.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

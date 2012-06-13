@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 
 namespace FxBackupLib
@@ -8,7 +9,7 @@ namespace FxBackupLib
 	{
 		string Name { get; }
 		string Path { get; }
+		Stream OpenStream();
 		System.Collections.Generic.IEnumerable<IOriginItem> SubItems { get; }
-		System.Collections.Generic.IEnumerable<IOriginItemStream> Streams { get; }
 	}
 }

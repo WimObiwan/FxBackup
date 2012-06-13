@@ -30,15 +30,14 @@ namespace FxBackupLib
 			return item;	
 		}
 		
-		internal Stream CreateStream (ArchiveStream archiveStream)
+		internal Stream CreateStream (Guid id)
 		{
-			archiveStream.PhysicalStoreStreamId = Guid.NewGuid ();
-			return physicalStore.CreateStream (archiveStream.PhysicalStoreStreamId);
+			return physicalStore.CreateStream (id);
 		}
 		
-		internal Stream OpenStream (ArchiveStream archiveStream)
+		internal Stream OpenStream (Guid id)
 		{
-			return physicalStore.OpenStream (archiveStream.PhysicalStoreStreamId);
+			return physicalStore.OpenStream (id);
 		}
 		
 		public void WriteIndex ()

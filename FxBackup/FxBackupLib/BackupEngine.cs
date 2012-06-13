@@ -11,8 +11,8 @@ namespace FxBackupLib
 		public List<IOrigin> Origins { get; private set; }
 
 		public Archive Archive { get; private set; }		
-		public delegate void ProgressEventHandler (object sender,ProgressEventArgs arg);
-
+		
+		public delegate void ProgressEventHandler (object sender,OriginProgressEventArgs arg);
 		public event ProgressEventHandler Progress;
 
 		StreamPump streamPump;
@@ -39,7 +39,7 @@ namespace FxBackupLib
 		{
 			IOriginItem originItem = origin.GetRootItem ();
 			logger.DebugFormat ("Processing Root Origin {0}", originItem.Name);
-			ArchiveItem archiveItem = Archive.CreateRootItem (originItem.Name);
+			ArchiveItem archiveItem = Archive.CreateRootItem (Path.GetFileName (originItem.Name));
 			ProcessOriginItem (archiveItem, originItem);
 		}
 
@@ -48,57 +48,46 @@ namespace FxBackupLib
 			logger.DebugFormat ("Processing Origin {0}", originItem.Name);
 			
 			if (Progress != null)
-				Progress (this, new ProgressEventArgs (State.BeginItem, originItem));
+				Progress (this, new OriginProgressEventArgs (State.BeginItem, originItem));
 			
-			ProgressOriginItemStreams (archiveItem, originItem);
-			ProgressOriginChildItems (archiveItem, originItem);
+			ProcessOriginItemStreams (archiveItem, originItem);
+			ProcessOriginChildItems (archiveItem, originItem);
 						
 			if (Progress != null)
-				Progress (this, new ProgressEventArgs (State.EndItem, originItem));
+				Progress (this, new OriginProgressEventArgs (State.EndItem, originItem));
 		}
 
-		void ProgressOriginItemStreams (ArchiveItem archiveItem, IOriginItem originItem)
+		void ProcessOriginItemStreams (ArchiveItem archiveItem, IOriginItem originItem)
 		{
-			bool firstDone = false;
-			foreach (IOriginItemStream originItemStream in originItem.Streams) {
-				if (!firstDone) {
-					if (Progress != null)
-						Progress (this, new ProgressEventArgs (State.BeginStreams, originItem));
-					firstDone = true;
-				}
-				using (Stream inputStream = originItemStream.GetStream()) {
+			using (Stream inputStream = originItem.OpenStream()) {
+				if (inputStream != null) {					
 					if (Progress != null)
 						Progress (
 							this,
-							new ProgressEventArgs (State.BeginStream, originItem, originItemStream)
+							new OriginProgressEventArgs (State.BeginStream, originItem)
 						);
-					ArchiveStream archiveStream = archiveItem.CreateStream (originItemStream.Id);
-					using (Stream outputStream = Archive.CreateStream(archiveStream)) {
+					using (Stream outputStream = archiveItem.CreateDataStream()) {
 						byte[] hash;
 						streamPump.Progress = delegate(long done, long total) {
 							if (Progress != null)
 								Progress (
 									this,
-									new ProgressEventArgs (State.Block, originItem, originItemStream, done, total)
+									new OriginProgressEventArgs (State.Block, originItem, done, total)
 								);
 						};
 						streamPump.Copy (inputStream, outputStream, out hash);
-						archiveStream.Hash = hash;
+						archiveItem.DataStreamHash = hash;
 					}
+					if (Progress != null)
+						Progress (
+							this,
+							new OriginProgressEventArgs (State.EndStream, originItem)
+						);
 				}
-				if (Progress != null)
-					Progress (
-						this,
-						new ProgressEventArgs (State.EndStream, originItem, originItemStream)
-					);
-			}
-			if (!firstDone) {
-				if (Progress != null)
-					Progress (this, new ProgressEventArgs (State.EndStreams, originItem));
 			}
 		}
 
-		void ProgressOriginChildItems (ArchiveItem archiveItem, IOriginItem originItem)
+		void ProcessOriginChildItems (ArchiveItem archiveItem, IOriginItem originItem)
 		{
 			bool firstDone = false;
 			foreach (IOriginItem originSubItem in originItem.SubItems) {
@@ -106,7 +95,7 @@ namespace FxBackupLib
 					if (Progress != null)
 						Progress (
 							this,
-							new ProgressEventArgs (State.BeginChildItems, originItem)
+							new OriginProgressEventArgs (State.BeginChildItems, originItem)
 						);
 					firstDone = true;
 				}
@@ -115,7 +104,7 @@ namespace FxBackupLib
 			}
 			if (!firstDone) {
 				if (Progress != null)
-					Progress (this, new ProgressEventArgs (State.EndChildItems, originItem));
+					Progress (this, new OriginProgressEventArgs (State.EndChildItems, originItem));
 			}
 		}
 	}

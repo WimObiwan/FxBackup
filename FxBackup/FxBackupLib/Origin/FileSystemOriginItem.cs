@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Collections.Generic;
 
 namespace FxBackupLib
 {
@@ -15,7 +16,15 @@ namespace FxBackupLib
 		public string Name { get { return FileSystemInfo.Name; } }
 		public string Path { get { return FileSystemInfo.FullName; } }
 
-		public System.Collections.Generic.IEnumerable<IOriginItem> SubItems {
+		public Stream OpenStream()
+		{
+			if ((FileSystemInfo.Attributes & FileAttributes.Directory) == 0)
+				return new FileStream (FileSystemInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+			else
+				return null;
+		}
+
+		public IEnumerable<IOriginItem> SubItems {
 			get {
 				DirectoryInfo directoryInfo = FileSystemInfo as DirectoryInfo;
 				if (directoryInfo != null) {
@@ -25,16 +34,6 @@ namespace FxBackupLib
 				}
 			}
 		}
-		
-		public System.Collections.Generic.IEnumerable<IOriginItemStream> Streams {
-			get {
-				if ((FileSystemInfo.Attributes & FileAttributes.Directory) == 0)
-					yield return new FileSystemOriginItemDataStream (FileSystemInfo);
-				else
-					yield break;
-			}
-		}
-
 	}
 }
 
