@@ -30,6 +30,15 @@ namespace FxBackupLib
 		{
 			return new FileStream (GetFileName(id), FileMode.Open, FileAccess.Read, FileShare.None);
 		}
+		
+		protected override bool ExistsImpl (Guid id)
+		{
+			return File.Exists(GetFileName(id));
+		}
+		
+		protected override void CloseImpl ()
+		{
+		}
 		#endregion
 	}
 }

@@ -5,10 +5,10 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace FxBackupLib
 {
-	public class Archive
+	public class Archive : IDisposable
 	{
 		MultiStream physicalStore;
-		readonly Guid IndexStreamId = new Guid ("26108f76-8a54-4387-83ba-0ef468517a3b");
+		readonly static Guid IndexStreamId = new Guid ("26108f76-8a54-4387-83ba-0ef468517a3b");
 			
 		List<ArchiveItem> rootItems = new List<ArchiveItem> ();
 		
@@ -66,6 +66,17 @@ namespace FxBackupLib
 			}
 		}
 
+		public void Close ()
+		{
+			physicalStore.Close ();
+		}
+		
+		#region IDisposable implementation
+		public void Dispose ()
+		{
+			physicalStore.Dispose ();
+		}
+		#endregion
 	}
 }
 

@@ -19,87 +19,99 @@ namespace FxBackupTest
 
 		static void Run ()
 		{
-			/*Directory.Delete (archivePath, true);
+			Directory.Delete (archivePath, true);
 			Directory.Delete (restorePath, true);
 			Directory.CreateDirectory (restorePath);
 			Backup ();
 			Verify (VerifyEngine.VerificationType.ArchiveHashWithArchiveData);
 			Verify (VerifyEngine.VerificationType.ArchiveHashWithOriginData);
 			Verify (VerifyEngine.VerificationType.ArchiveDataWithOriginData);
-			Restore ();*/
+			Restore ();
 			TestRestore ();
 		}
-		
+
+		static MultiStream GetStore ()
+		{
+			//return new DirectoryStore (archivePath);
+			return new SequenceStream (new DirectoryStore (archivePath));
+		}
+
 		static void Backup ()
 		{
-			Archive archive = new Archive (new DirectoryStore (archivePath));
-			BackupEngine engine = new BackupEngine (archive);
-			engine.Origins.Add (new FileSystemOrigin (originPath));
-			engine.Progress += delegate(object sender, OriginProgressEventArgs arg) {
-				switch (arg.State) {
-				case State.BeginItem:
-					Console.WriteLine ("{0}...", arg.OriginItem.Path);
-					break;
-				case State.Block:
-					if (arg.Total > 0)
-						Console.WriteLine (
+			using (Archive archive = new Archive (GetStore())) {				
+				BackupEngine engine = new BackupEngine (archive);
+				engine.Origins.Add (new FileSystemOrigin (originPath));
+				engine.Progress += delegate(object sender, OriginProgressEventArgs arg) {
+					switch (arg.State) {
+					case State.BeginItem:
+						Console.WriteLine ("{0}...", arg.OriginItem.Path);
+						break;
+					case State.Block:
+						if (arg.Total > 0)
+							Console.WriteLine (
 							"       {0} {1}%",
 							arg.Done,
 							arg.Done * 100 / arg.Total
-						);
-					else
-						Console.WriteLine ("       {0}", arg.Done);
-					Console.CursorTop -= 1;
-					break;
-				}
-			};
-			engine.Run ();			
+							);
+						else
+							Console.WriteLine ("       {0}", arg.Done);
+						Console.CursorTop -= 1;
+						break;
+					}
+				};
+				engine.Run ();
+			}
 		}
 
 		static void Verify (VerifyEngine.VerificationType verificationType)
 		{
-			Archive archive = new Archive (new DirectoryStore (archivePath));
-			VerifyEngine engine = new VerifyEngine (archive);
-			if (verificationType != VerifyEngine.VerificationType.ArchiveHashWithArchiveData)
-				engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
-			bool same = engine.Run (verificationType);
-			if (same)
-				Console.WriteLine ("Verification succeeded");
-			else
-				Console.WriteLine ("Verification failed");
+			using (Archive archive = new Archive (GetStore())) {				
+				VerifyEngine engine = new VerifyEngine (archive);
+				if (verificationType != VerifyEngine.VerificationType.ArchiveHashWithArchiveData)
+					engine.Origins.Add (new FileSystemOrigin (@"C:\Data\Portable Program Files"));
+				bool same = engine.Run (verificationType);
+				if (same)
+					Console.WriteLine ("Verification succeeded");
+				else
+					Console.WriteLine ("Verification failed");
+			}
 		}
 		
 		static void Restore ()
 		{
-			Archive archive = new Archive (new DirectoryStore (archivePath));
-			RestoreEngine engine = new RestoreEngine (
+			using (Archive archive = new Archive (GetStore())) {				
+				RestoreEngine engine = new RestoreEngine (
 				new FileSystemOrigin (restorePath),
 				archive
-			);
-			engine.Progress += delegate(object sender, OriginProgressEventArgs arg) {
-				switch (arg.State) {
-				case State.BeginItem:
-					Console.WriteLine ("{0}...", arg.OriginItem.Path);
-					break;
-				case State.Block:
-					if (arg.Total > 0)
-						Console.WriteLine (
+				);
+				engine.Progress += delegate(object sender, OriginProgressEventArgs arg) {
+					switch (arg.State) {
+					case State.BeginItem:
+						Console.WriteLine ("{0}...", arg.OriginItem.Path);
+						break;
+					case State.Block:
+						if (arg.Total > 0)
+							Console.WriteLine (
 							"       {0} {1}%",
 							arg.Done,
 							arg.Done * 100 / arg.Total
-						);
-					else
-						Console.WriteLine ("       {0}", arg.Done);
-					Console.CursorTop -= 1;
-					break;
-				}
-			};
-			engine.Run ();
+							);
+						else
+							Console.WriteLine ("       {0}", arg.Done);
+						Console.CursorTop -= 1;
+						break;
+					}
+				};
+				engine.Run ();
+			}
 		}
 
 		static void TestRestore ()
 		{
-			if (TestRecursive (originPath, Path.Combine(restorePath, Path.GetFileName (originPath))))
+			if (TestRecursive (
+				originPath,
+				Path.Combine(restorePath, Path.GetFileName (originPath))
+			))
 				Console.WriteLine ("Compare restore succeeded");
 			else
 				Console.WriteLine ("Compare restore failed");
@@ -152,7 +164,7 @@ namespace FxBackupTest
 					} else {
 						using (Stream input1 = new FileStream(origin.FullName, FileMode.Open, FileAccess.Read)) {
 							using (Stream input2 = new FileStream(restore.FullName, FileMode.Open, FileAccess.Read)) {
-								StreamVerifier streamVerifier = new StreamVerifier();
+								StreamVerifier streamVerifier = new StreamVerifier ();
 								if (!streamVerifier.Verify (input1, input2))
 									same = false;
 							}
